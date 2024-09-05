@@ -1,5 +1,5 @@
 # Tic-Tac-Toe
-* Link :- https://ashish4kmax.github.io/TicTacToe.github.io/
+* Link :- [https://ashish4kmax.github.io/TicTacToe.github.io/](https://tic-tac-toe-alpha-ecru.vercel.app/)
 * Below are some of the screenshots of the game project :-
 <img src="./Images/Test1.png" alt="Test1"/>
 * Testing images:-
