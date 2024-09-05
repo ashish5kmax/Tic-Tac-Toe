@@ -213,6 +213,31 @@
             #top-button {
                 margin-left: -6%;
             }
+
+            /* Add this CSS to position the leaderboard */
+            #leaderboard {
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 1rem;
+                text-align: center;
+            }
+
+            /* Ensure that leaderboard is responsive */
+            @media (max-width: 576px) {
+                #leaderboard {
+                    width: 100%;
+                    border-radius: 0;
+                    font-size: 1rem;
+                    text-align: center;
+                }
+            }
+
+            p {
+                text-align: center;
+                margin-left: 0%;
+            }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
@@ -222,7 +247,7 @@
     <link rel="icon" href="./Images/tic-tac-toe.png">
 </head>
 
-<body onload="loadPlayerInfo()">
+<body onload="loadPlayerInfo(); loadLeaderboard();">
     <h1><span>Tic</span> <span>Tac</span> <span>Toe</span></h1>
     <div class="players">
         <p>Player :- <input type="text" id="player1" placeholder="Enter your name"></p>
@@ -254,6 +279,8 @@
     <br />
     <br />
 
+    <div id="leaderboard" class="leaderboard"></div>
+
     <div class="footer">
         <div>
             <p>© Tic-Tac-Toe</p>
@@ -261,12 +288,67 @@
         </div>
     </div>
 
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1030.0.min.js"></script>
     <script>
+        AWS.config.update({
+            region: 'us-east-1', // e.g., 'us-west-2'
+            accessKeyId: 'AKIAQHEPT6D464V24Y5E', // Update with your AWS access key ID
+            secretAccessKey: '5JFXbFuU8QEHcBnTHlLLkxwmfYQVcHi6JUU7TAyW' // Update with your AWS secret access key
+        });
+
+        const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
         var matrix = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
         var count = 0;
         var currentMode = "player-vs-player";
         var currentPlayer = "X";
 
+        async function updateScore(playerName) {
+            const params = {
+                TableName: 'TicTacToeLeaderboard',
+                Key: { playerName: playerName },
+                UpdateExpression: 'SET score = if_not_exists(score, :start) + :increment',
+                ExpressionAttributeValues: {
+                    ':increment': 1,
+                    ':start': 0
+                },
+                ReturnValues: 'UPDATED_NEW'
+            };
+
+            try {
+                await dynamoDB.update(params).promise();
+                loadLeaderboard();
+            } catch (error) {
+                console.error('Error updating score:', error);
+            }
+        }
+
+        async function loadLeaderboard() {
+            const params = {
+                TableName: 'TicTacToeLeaderboard',
+                ProjectionExpression: 'playerName, score',
+                ScanIndexForward: false // Ensure the scan is in descending order by score
+            };
+
+            try {
+                const data = await dynamoDB.scan(params).promise();
+                // Sort the players by score in descending order
+                const sortedPlayers = data.Items.sort((a, b) => b.score - a.score);
+                // Display only the top 10 players
+                displayLeaderboard(sortedPlayers.slice(0, 10));
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+
+        function displayLeaderboard(players) {
+            const leaderboardDiv = document.getElementById('leaderboard');
+            leaderboardDiv.innerHTML = '<h3>Leaderboard</h3>';
+            players.forEach(player => {
+                leaderboardDiv.innerHTML += `<p>${player.playerName}: ${player.score}</p>`;
+            });
+        }
 
         function disableGrid() {
             const gridItems = document.querySelectorAll('.grid-item');
@@ -326,6 +408,7 @@
 
                     if (checkWinner()) {
                         document.getElementById("result").innerHTML = player1 + " wins!";
+                        updateScore(player1);  // Update score in DynamoDB
                         disableGrid();
                         return;
                     }
