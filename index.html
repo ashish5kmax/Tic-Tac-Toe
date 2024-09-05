@@ -222,14 +222,14 @@
     <link rel="icon" href="./Images/tic-tac-toe.png">
 </head>
 
-<body>
+<body onload="loadPlayerInfo()">
     <h1><span>Tic</span> <span>Tac</span> <span>Toe</span></h1>
     <div class="players">
         <p>Player :- <input type="text" id="player1" placeholder="Enter your name"></p>
         <p>Mode :-
             <select id="game-mode">
-                <option value="player-vs-player">Player vs Player</option>
                 <option value="player-vs-cpu">Player vs CPU</option>
+                <option value="player-vs-player">Player vs Player</option>
             </select>
         </p>
         <button class="button-85" onclick="players()">Submit</button>
@@ -251,7 +251,7 @@
     <div class="resets">
         <button id="resets" class="button-85" type="button" onclick="reload()">Restart</button>
     </div>
-    <br/>
+    <br />
     <br />
 
     <div class="footer">
@@ -267,44 +267,84 @@
         var currentMode = "player-vs-player";
         var currentPlayer = "X";
 
+
+        function disableGrid() {
+            const gridItems = document.querySelectorAll('.grid-item');
+            gridItems.forEach(item => item.style.pointerEvents = 'none');
+        }
+
+        function enableGrid() {
+            const gridItems = document.querySelectorAll('.grid-item');
+            gridItems.forEach(item => item.style.pointerEvents = 'auto');
+        }
+
+
         function players() {
             let player1 = document.getElementById("player1").value;
             let gameMode = document.getElementById("game-mode").value;
-            currentMode = gameMode;
 
             if (player1 == "") {
-                alert("Enter your name.");
+                alert("Enter your name and select game mode to start the game.");
                 return false;
             }
 
+            // Store the player name in localStorage
+            localStorage.setItem("playerName", player1);
+            localStorage.setItem("gameMode", gameMode);
+
             document.getElementById("result").innerHTML = player1 + " vs " + (gameMode === 'player-vs-cpu' ? "CPU" : "Player 2");
+            currentMode = gameMode;
         }
 
+        function loadPlayerInfo() {
+            // Retrieve the player name and game mode from localStorage
+            const playerName = localStorage.getItem("playerName");
+            const gameMode = localStorage.getItem("gameMode") || "player-vs-player";
+
+            if (playerName) {
+                document.getElementById("player1").value = playerName;
+                document.getElementById("game-mode").value = gameMode;
+                document.getElementById("result").innerHTML = playerName + " vs " + (gameMode === 'player-vs-cpu' ? "CPU" : "Player 2");
+                currentMode = gameMode;
+            }
+        }
+
+        // This is basically the draw command or the move command to allow user to put their place on grid
         function initialize(position) {
-            if (matrix[position] !== "X" && matrix[position] !== "O") {
-                matrix[position] = currentPlayer;
-                document.getElementById(position + 1).innerHTML = currentPlayer;
-                count++;
+            let player1 = document.getElementById("player1").value;
+            let gameMode = document.getElementById("game-mode").value;
 
-                if (checkWinner()) {
-                    document.getElementById("result").innerHTML = currentPlayer + " wins!";
-                    disableGrid();
-                    return;
-                }
+            if (player1 == "") {
+                alert("Enter your name and select game mode to start the game.");
+                return false;
+            }
+            else {
+                if (matrix[position] !== "X" && matrix[position] !== "O") {
+                    matrix[position] = currentPlayer;
+                    document.getElementById(position + 1).innerHTML = currentPlayer;
+                    count++;
 
-                if (count === 9) {
-                    document.getElementById("result").innerHTML = "It's a draw!";
-                    return;
-                }
+                    if (checkWinner()) {
+                        document.getElementById("result").innerHTML = player1 + " wins!";
+                        disableGrid();
+                        return;
+                    }
 
-                currentPlayer = currentPlayer === "X" ? "O" : "X";
+                    if (count === 9) {
+                        document.getElementById("result").innerHTML = "It's a draw!";
+                        return;
+                    }
 
-                if (currentMode === "player-vs-cpu" && currentPlayer === "O") {
-                    setTimeout(cpuMove, 500);
+                    currentPlayer = currentPlayer === "X" ? "O" : "X";
+
+                    if (currentMode === "player-vs-cpu" && currentPlayer === "O") {
+                        setTimeout(cpuMove, 500);
+                    }
                 }
             }
         }
 
+        // Cpu moves according to the magic square algorithm
         function cpuMove() {
             if (tryToWinOrBlock("O") || tryToWinOrBlock("X")) {
                 if (checkWinner()) {
@@ -327,6 +367,7 @@
             currentPlayer = "X";
         }
 
+        // This is basically the magic square pattern
         function tryToWinOrBlock(symbol) {
             const winPatterns = [
                 [0, 1, 2],
@@ -366,6 +407,7 @@
             return false;
         }
 
+        // To check game winner
         function checkWinner() {
             const winPatterns = [
                 [0, 1, 2],
@@ -387,13 +429,18 @@
             return false;
         }
 
-        function disableGrid() {
-            const gridItems = document.querySelectorAll('.grid-item');
-            gridItems.forEach(item => item.style.pointerEvents = 'none');
-        }
-
         function reload() {
-            window.location.reload();
+            matrix = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+            count = 0;
+            currentPlayer = "X";
+            enableGrid();
+
+            // Clear the grid items
+            const gridItems = document.querySelectorAll('.grid-item');
+            gridItems.forEach(item => item.innerHTML = "");
+
+            // Reload player info
+            loadPlayerInfo();
         }
     </script>
 </body>
