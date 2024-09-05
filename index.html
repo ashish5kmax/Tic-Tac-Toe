@@ -290,10 +290,12 @@
 
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1030.0.min.js"></script>
     <script>
+        require('dotenv').config();
+
         AWS.config.update({
             region: 'us-east-1', // e.g., 'us-west-2'
-            accessKeyId: 'AKIAQHEPT6D464V24Y5E', // Update with your AWS access key ID
-            secretAccessKey: '5JFXbFuU8QEHcBnTHlLLkxwmfYQVcHi6JUU7TAyW' // Update with your AWS secret access key
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID, // Update with your AWS access key ID
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY // Update with your AWS secret access key
         });
 
         const dynamoDB = new AWS.DynamoDB.DocumentClient();
